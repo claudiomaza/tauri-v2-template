@@ -1,9 +1,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 /// cm2labs Encrypted Token Vault
-/// - AES-256-GCM con clave en RAM (muere al reiniciar)
+/// - AES-256-GCM con clave en RAM (muere al cerrar la app)
+/// - Escritura atómica (temp + rename) — nunca corrompe vault.enc
 /// - Store/Get/Clear via Tauri commands
-/// - Auto-clear on window close
 use std::sync::Mutex;
 use std::fs;
 use std::path::PathBuf;
@@ -57,7 +57,11 @@ fn store_token(token: String, app: tauri::AppHandle) -> Result<(), String> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).map_err(|e| format!("mkdir: {}", e))?;
     }
-    fs::write(&path, &payload).map_err(|e| format!("write: {}", e))?;
+
+    // Escritura atómica: temp -> rename para evitar corrupción en crash
+    let temp_path = path.with_extension("enc.tmp");
+    fs::write(&temp_path, &payload).map_err(|e| format!("write: {}", e))?;
+    fs::rename(&temp_path, &path).map_err(|e| format!("rename: {}", e))?;
     Ok(())
 }
 
@@ -91,6 +95,8 @@ fn get_token(app: tauri::AppHandle) -> Result<Option<String>, String> {
 #[tauri::command]
 fn clear_vault(app: tauri::AppHandle) -> Result<(), String> {
     vault_clear(&app);
+    // Limpiar eventual temp residual
+    let _ = fs::remove_file(vault_path(&app).with_extension("enc.tmp"));
     Ok(())
 }
 
