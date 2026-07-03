@@ -1,14 +1,27 @@
-# tauri-v2-cross-template 🧩
+# tauri-v2-template 🧩
 
-Template multi-plataforma para **Tauri v2** — compila a Windows, Linux y Android desde un mismo código.
+Template multi-plataforma para **Tauri v2** — Windows, Linux, macOS, Android e iOS desde un mismo código.
 
-## 📦 Targets
+## 🎮 Configuración de Build
+
+En `.github/workflows/build.yml`, buscá esta sección y poné `'true'/`false'`:
+
+```yaml
+env:
+  WINDOWS: "true"
+  LINUX: "true"
+  MACOS: "false"
+  ANDROID: "false"
+  IOS: "false"
+```
 
 | Plataforma | Binario | Runner CI |
 |---|---|---|
 | 🪟 Windows | `.exe` + NSIS installer | `windows-latest` |
 | 🐧 Linux | `.deb` + AppImage | `ubuntu-latest` |
-| 📱 Android | `.apk` | `ubuntu-latest` (+ SDK) |
+| 🍏 macOS | `.dmg` | `macos-latest` |
+| 🤖 Android | `.apk` | `ubuntu-latest` (+ SDK) |
+| 📱 iOS | `.app` (simulador) | `macos-latest` |
 
 ## 🚀 Cómo usar
 1. **Fork** este repositorio
@@ -16,32 +29,11 @@ Template multi-plataforma para **Tauri v2** — compila a Windows, Linux y Andro
 3. Ajustá `src-tauri/tauri.conf.json` (name, identifier, version)
 4. Push a `main` — CI compila automáticamente
 
-## 🎮 Toggles de Build
-
-Podés activar/desactivar plataformas de dos formas:
-
-### Opción A — Editando el YML
-En `.github/workflows/build.yml`, cambiá los valores:
-```yaml
-BUILD_WINDOWS: "true"
-BUILD_LINUX: "true"
-BUILD_ANDROID: "false"
-```
-
-### Opción B — Desde GitHub UI
-Andá a **Actions → Build → Run workflow** y seleccioná qué compilar.
+También podés disparar builds manuales desde **Actions → Run workflow** y elegir plataformas una por una.
 
 ## 🔐 Seguridad: Encrypted Token Vault
 
-Incluye bóveda de tokens AES-256-GCM con clave en RAM:
-
-| Característica | Detalle |
-|---|---|
-| Cifrado | AES-256-GCM |
-| Clave | En RAM, generada al primer `store_token` |
-| Almacenamiento | `%APPDATA%` (Win), `~/.local/share` (Linux), app-specific (Android) |
-| Escritura | Atómica (temp + rename) |
-| Limpieza automática | Al cerrar ventana |
+Bóveda de tokens AES-256-GCM con clave en RAM, escritura atómica y limpieza automática al cerrar.
 
 ### API frontend (JS)
 ```javascript
@@ -53,7 +45,7 @@ await window.__TAURI__.invoke("clear_vault")
 ## 📁 Estructura
 ```
 .
-├── .github/workflows/build.yml   ← CI/CD cross-platform
+├── .github/workflows/build.yml   ← CI/CD con toggles
 ├── ui/index.html                 ← TU app web (Tier 2 Compact)
 ├── src-tauri/
 │   ├── Cargo.toml
