@@ -13,8 +13,16 @@ on:
         description: 'Build for Linux (.deb / AppImage)'
         type: boolean
         default: true
+      build_macos:
+        description: 'Build for macOS (.dmg)'
+        type: boolean
+        default: false
       build_android:
         description: 'Build for Android (.apk)'
+        type: boolean
+        default: false
+      build_ios:
+        description: 'Build for iOS (simulator .app, requiere macOS runner)'
         type: boolean
         default: false
 
@@ -22,10 +30,9 @@ permissions:
   contents: write
 
 # ─── TOGGLES DE PLATAFORMA ─────────────────────────────
-# En push:            Windows ✅  Linux ✅  Android ❌
+# En push:  Windows ✅  Linux ✅  macOS ❌  Android ❌  iOS ❌
 # En workflow_dispatch: respeta los inputs del UI
-# Para cambiar push defaults: editá los 'true'|'false'
-# en el if de cada job abajo.
+# Para cambiar push defaults: editá el if del job
 # ───────────────────────────────────────────────────────
 
 jobs:
@@ -119,9 +126,44 @@ jobs:
             src-tauri/target/release/bundle/appimage/*.AppImage
           if-no-files-found: error
 
+  # ======================== macOS ==========================
+  build-macos:
+    # Push: false | Manual: si se tilda
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.build_macos == 'true' }}
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Prep UI
+        run: |
+          if [ ! -f ui/index.html ]; then
+            echo "ERROR: ui/index.html not found!"
+            exit 1
+          fi
+          echo "ui/index.html ready ($(wc -c < ui/index.html) bytes)"
+      - name: Install deps
+        run: npm install
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: app-v0.1.${{ github.run_number }}
+          releaseName: "cm2labs v0.1.${{ github.run_number }}"
+          releaseDraft: true
+      - name: Upload .dmg
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-dmg
+          path: src-tauri/target/release/bundle/dmg/*.dmg
+          if-no-files-found: error
+
   # ======================= ANDROID ========================
   build-android:
-    # Solo con workflow_dispatch (Android requiere SDK pesado)
     if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.build_android == 'true' }}
     runs-on: ubuntu-latest
     permissions:
@@ -166,4 +208,41 @@ jobs:
         with:
           name: android-apk
           path: src-tauri/gen/android/app/build/outputs/apk/*/*.apk
+          if-no-files-found: error
+
+  # ======================== iOS ============================
+  build-ios:
+    # Solo manual. Sin Apple Developer Account compila para simulador.
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.build_ios == 'true' }}
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install iOS Rust targets
+        run: |
+          rustup target add aarch64-apple-ios
+          rustup target add aarch64-apple-ios-sim
+      - name: Prep UI
+        run: |
+          if [ ! -f ui/index.html ]; then
+            echo "ERROR: ui/index.html not found!"
+            exit 1
+          fi
+          echo "ui/index.html ready ($(wc -c < ui/index.html) bytes)"
+      - name: Install deps
+        run: npm install
+      - name: Init iOS project
+        run: npm run tauri ios init
+      - name: Build for iOS Simulator
+        run: npm run tauri ios build -- --target aarch64-apple-ios-sim
+      - name: Upload iOS Simulator app
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-simulator
+          path: src-tauri/gen/apple/build/outputs/ios-simulator/*.app
           if-no-files-found: error
