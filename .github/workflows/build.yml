@@ -21,19 +21,17 @@ on:
 permissions:
   contents: write
 
-env:
-  # ─── TOGGLES ────────────────────────────────────────────
-  # Editá estos valores directo en el YML, o usa
-  # "Run workflow" desde GitHub Actions para override via UI
-  BUILD_WINDOWS: ${{ inputs.build_windows || 'true' }}
-  BUILD_LINUX: ${{ inputs.build_linux || 'true' }}
-  BUILD_ANDROID: ${{ inputs.build_android || 'false' }}
-  # ────────────────────────────────────────────────────────
+# ─── TOGGLES DE PLATAFORMA ─────────────────────────────
+# En push:            Windows ✅  Linux ✅  Android ❌
+# En workflow_dispatch: respeta los inputs del UI
+# Para cambiar push defaults: editá los 'true'|'false'
+# en el if de cada job abajo.
+# ───────────────────────────────────────────────────────
 
 jobs:
   # ======================== WINDOWS ========================
   build-windows:
-    if: env.BUILD_WINDOWS == 'true'
+    if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.build_windows == 'true') }}
     runs-on: windows-latest
     permissions:
       contents: write
@@ -75,7 +73,7 @@ jobs:
 
   # ======================== LINUX ==========================
   build-linux:
-    if: env.BUILD_LINUX == 'true'
+    if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.build_linux == 'true') }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -123,7 +121,8 @@ jobs:
 
   # ======================= ANDROID ========================
   build-android:
-    if: env.BUILD_ANDROID == 'true'
+    # Solo con workflow_dispatch (Android requiere SDK pesado)
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.build_android == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -158,6 +157,8 @@ jobs:
           echo "ui/index.html ready ($(wc -c < ui/index.html) bytes)"
       - name: Install deps
         run: npm install
+      - name: Init Android project
+        run: npm run tauri android init
       - name: Build Android APK
         run: npm run tauri android build -- --apk
       - name: Upload APK
