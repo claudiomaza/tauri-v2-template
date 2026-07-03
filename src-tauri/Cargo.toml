@@ -1,0 +1,22 @@
+[package]
+name = "fluyo"
+version = "1.1.0"
+description = "Registro de Trayectorias EAD - Tauri v2"
+authors = ["cm2labs"]
+license = ""
+repository = ""
+edition = "2021"
+rust-version = "1.77"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-shell = "2"
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+
+[features]
+default = [ "custom-protocol" ]
+custom-protocol = [ "tauri/custom-protocol" ]
