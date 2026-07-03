@@ -8,11 +8,11 @@ on:
       build_windows:
         description: 'Build for Windows (.exe + NSIS)'
         type: boolean
-        default: true
+        default: false
       build_linux:
         description: 'Build for Linux (.deb / AppImage)'
         type: boolean
-        default: true
+        default: false
       build_macos:
         description: 'Build for macOS (.dmg)'
         type: boolean
@@ -22,23 +22,34 @@ on:
         type: boolean
         default: false
       build_ios:
-        description: 'Build for iOS (simulator .app, requiere macOS runner)'
+        description: 'Build for iOS (simulator .app)'
         type: boolean
         default: false
 
 permissions:
   contents: write
 
-# ─── TOGGLES DE PLATAFORMA ─────────────────────────────
-# En push:  Windows ✅  Linux ✅  macOS ❌  Android ❌  iOS ❌
-# En workflow_dispatch: respeta los inputs del UI
-# Para cambiar push defaults: editá el if del job
-# ───────────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════
+#   CONFIGURACIÓN DE PLATAFORMAS
+#   Cambiá True/False para activar/desactivar cada build.
+#   En push rigen estos valores. En workflow_dispatch los
+#   inputs del UI sobreescriben estos defaults.
+# ═══════════════════════════════════════════════════════════
+env:
+  WINDOWS: 'true'
+  LINUX: 'true'
+  MACOS: 'false'
+  ANDROID: 'false'
+  IOS: 'false'
+
+# ═══════════════════════════════════════════════════════════
+#   JOBS — no tocar nada de acá abajo
+# ═══════════════════════════════════════════════════════════
 
 jobs:
-  # ======================== WINDOWS ========================
+  # ────────────────────────── WINDOWS ──────────────────────────
   build-windows:
-    if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.build_windows == 'true') }}
+    if: ${{ (github.event_name == 'push' && env.WINDOWS == 'true') || (github.event_name == 'workflow_dispatch' && github.event.inputs.build_windows == 'true') }}
     runs-on: windows-latest
     permissions:
       contents: write
@@ -78,9 +89,9 @@ jobs:
           path: src-tauri/target/release/bundle/nsis/*.exe
           if-no-files-found: error
 
-  # ======================== LINUX ==========================
+  # ────────────────────────── LINUX ───────────────────────────
   build-linux:
-    if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.build_linux == 'true') }}
+    if: ${{ (github.event_name == 'push' && env.LINUX == 'true') || (github.event_name == 'workflow_dispatch' && github.event.inputs.build_linux == 'true') }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -126,10 +137,9 @@ jobs:
             src-tauri/target/release/bundle/appimage/*.AppImage
           if-no-files-found: error
 
-  # ======================== macOS ==========================
+  # ────────────────────────── macOS ──────────────────────────
   build-macos:
-    # Push: false | Manual: si se tilda
-    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.build_macos == 'true' }}
+    if: ${{ (github.event_name == 'push' && env.MACOS == 'true') || (github.event_name == 'workflow_dispatch' && github.event.inputs.build_macos == 'true') }}
     runs-on: macos-latest
     permissions:
       contents: write
@@ -162,9 +172,9 @@ jobs:
           path: src-tauri/target/release/bundle/dmg/*.dmg
           if-no-files-found: error
 
-  # ======================= ANDROID ========================
+  # ───────────────────────── ANDROID ─────────────────────────
   build-android:
-    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.build_android == 'true' }}
+    if: ${{ (github.event_name == 'push' && env.ANDROID == 'true') || (github.event_name == 'workflow_dispatch' && github.event.inputs.build_android == 'true') }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -210,10 +220,9 @@ jobs:
           path: src-tauri/gen/android/app/build/outputs/apk/*/*.apk
           if-no-files-found: error
 
-  # ======================== iOS ============================
+  # ────────────────────────── iOS ───────────────────────────
   build-ios:
-    # Solo manual. Sin Apple Developer Account compila para simulador.
-    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.build_ios == 'true' }}
+    if: ${{ (github.event_name == 'push' && env.IOS == 'true') || (github.event_name == 'workflow_dispatch' && github.event.inputs.build_ios == 'true') }}
     runs-on: macos-latest
     permissions:
       contents: write
