@@ -1,0 +1,11 @@
+{
+  "identifier": "default",
+  "description": "Capabilities for Tauri v2 Template App",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:default",
+    "shell:allow-open"
+  ]
+}
