@@ -1,52 +1,68 @@
-# tauri-v2-template-win 🪟
+# tauri-v2-cross-template 🧩
 
-Template base para aplicaciones Windows con **Tauri v2**.
+Template multi-plataforma para **Tauri v2** — compila a Windows, Linux y Android desde un mismo código.
 
-## 📦 Requisitos
-- Rust 1.77+
-- Node.js 18+
-- Windows (target único)
+## 📦 Targets
+
+| Plataforma | Binario | Runner CI |
+|---|---|---|
+| 🪟 Windows | `.exe` + NSIS installer | `windows-latest` |
+| 🐧 Linux | `.deb` + AppImage | `ubuntu-latest` |
+| 📱 Android | `.apk` | `ubuntu-latest` (+ SDK) |
 
 ## 🚀 Cómo usar
 1. **Fork** este repositorio
-2. Crear carpeta `ui/` y poner tu `index.html` allí
-3. Ajustar en `src-tauri/tauri.conf.json`: `title` e `identifier`
-4. Pushear a `main` — GitHub Actions compila automáticamente
+2. Poné tu `index.html` en `ui/`
+3. Ajustá `src-tauri/tauri.conf.json` (name, identifier, version)
+4. Push a `main` — CI compila automáticamente
 
-## 📁 Estructura
+## 🎮 Toggles de Build
+
+Podés activar/desactivar plataformas de dos formas:
+
+### Opción A — Editando el YML
+En `.github/workflows/build.yml`, cambiá los valores:
+```yaml
+BUILD_WINDOWS: "true"
+BUILD_LINUX: "true"
+BUILD_ANDROID: "false"
 ```
-.
-├── .github/workflows/build.yml   # CI/CD → .exe
-├── ui/index.html                 # TU app web acá
-├── src-tauri/
-│   ├── Cargo.toml
-│   ├── build.rs
-│   ├── tauri.conf.json
-│   ├── capabilities/default.json
-│   ├── icons/icon.ico
-│   └── src/main.rs
-└── package.json
-```
+
+### Opción B — Desde GitHub UI
+Andá a **Actions → Build → Run workflow** y seleccioná qué compilar.
 
 ## 🔐 Seguridad: Encrypted Token Vault
 
-El template incluye una bóveda de tokens cifrados integrada en el backend Rust:
+Incluye bóveda de tokens AES-256-GCM con clave en RAM:
 
 | Característica | Detalle |
 |---|---|
 | Cifrado | AES-256-GCM |
 | Clave | En RAM, generada al primer `store_token` |
-| Almacenamiento | `%APPDATA%/.../vault.enc` |
-| Escritura | Atómica (temp + rename) — tolerante a crashes |
-| Limpieza automática | Al cerrar ventana se borra clave y archivo |
+| Almacenamiento | `%APPDATA%` (Win), `~/.local/share` (Linux), app-specific (Android) |
+| Escritura | Atómica (temp + rename) |
+| Limpieza automática | Al cerrar ventana |
 
-`vault.enc` es ilegible sin la clave en RAM. Al reiniciar la PC la clave se pierde.
-
-### API para el frontend
+### API frontend (JS)
 ```javascript
 await window.__TAURI__.invoke("store_token", { token: "..." })
 await window.__TAURI__.invoke("get_token")
 await window.__TAURI__.invoke("clear_vault")
+```
+
+## 📁 Estructura
+```
+.
+├── .github/workflows/build.yml   ← CI/CD cross-platform
+├── ui/index.html                 ← TU app web (Tier 2 Compact)
+├── src-tauri/
+│   ├── Cargo.toml
+│   ├── build.rs
+│   ├── tauri.conf.json
+│   ├── capabilities/default.json
+│   ├── icons/
+│   └── src/main.rs               ← Rust cross-platform
+└── package.json
 ```
 
 ## ⚡ Built with cm2labs
