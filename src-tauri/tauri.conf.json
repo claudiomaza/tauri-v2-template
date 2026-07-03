@@ -1,0 +1,44 @@
+{
+  "productName": "fluyo-cm2labs",
+  "version": "1.2.1",
+  "identifier": "com.cm2labs.fluyo",
+  "build": {
+    "frontendDist": "../ui",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": ""
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Tauri App",
+        "width": 1024,
+        "height": 768,
+        "url": "index.html"
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:/ blob:; connect-src 'self' https: tauri: ipc: blob:; worker-src 'self' blob:;"
+    },
+    "identifier": "com.template.app"
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "installerIcon": "icons/icon.ico",
+        "languages": [
+          "Spanish",
+          "English"
+        ],
+        "displayLanguageSelector": true
+      }
+    },
+    "identifier": "com.template.app"
+  }
+}
